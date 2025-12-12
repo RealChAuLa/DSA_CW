@@ -6,15 +6,14 @@ class BruteForce:
 		self.choosen_cities = choosen_cities
 		self.distance_matrix = distance_matrix
 		self.best_distance = float('inf')
-		self.best_route = None
+		self.best_route = []
 
 		self.city_to_index: dict[str, int] = {city: i for i, city in enumerate(choosen_cities)}
 		self.main_city_index = main_city_index
 
-	def start(self) -> (int, list[str]):
+	def start(self) -> tuple[int, list[str]]:
+		total: int = 0
 		for perm in itertools.permutations(self.choosen_cities):
-			total: int = 0
-
 			# go to first city
 			total += self.distance_matrix[self.main_city_index][self.city_to_index[perm[0]]]
 

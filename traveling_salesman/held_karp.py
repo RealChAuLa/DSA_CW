@@ -19,7 +19,7 @@ class HeldKarpDP:
 				self.hk_matrix[i][j] = distance_matrix[global_indices[city_i]][global_indices[city_j]]
 
 
-	def start(self) -> (int, list[str]):
+	def start(self) -> tuple[int, list[str]]:
 		n = len(self.hk_matrix)
 		# Number of subsets: 2^n
 		N = 1 << n
@@ -28,7 +28,7 @@ class HeldKarpDP:
 		# dp[mask][j] = minimum cost to reach subset 'mask' and end at node j
 		dp = [[INF] * n for _ in range(N)]
 		# parent[mask][j] = previous node before j in optimal path for (mask, j)
-		parent = [[None] * n for _ in range(N)]
+		parent: list[list[int | None]] = [[None] * n for _ in range(N)]
 
 		# Base case: start at node 0, mask = 1<<0
 		dp[1][0] = 0
@@ -76,4 +76,4 @@ class HeldKarpDP:
 
 		final_path: list[str] = [self.ordered_city_list[i] for i in path]
 
-		return min_cost, final_path
+		return int(min_cost), final_path

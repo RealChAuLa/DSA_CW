@@ -2,6 +2,7 @@ import random
 
 from .brute_force import BruteForce
 from .held_karp import HeldKarpDP
+from .nn_2opt import NearestNeighbor2Opt
 
 class Game:
 	def __init__(self) -> None:
@@ -33,6 +34,7 @@ class Game:
 		# muti-processing to spin up the algorithms
 		brute_force_tsp = BruteForce(self.main_city, self.cities.index(self.main_city), self.player_selected_cities, self.distance_matrix)
 		hk_tsp = HeldKarpDP(self.main_city, self.cities, self.distance_matrix, self.player_selected_cities)
+		nn_2opt_tsp = NearestNeighbor2Opt(self.main_city, self.player_selected_cities, self.distance_matrix)
 		# 2-opt + nearest neighbor
 
 		# player choose city cap
