@@ -11,7 +11,7 @@ class BruteForce:
 		self.city_to_index: dict[str, int] = {city: i for i, city in enumerate(choosen_cities)}
 		self.main_city_index = main_city_index
 
-	def start(self) -> None:
+	def start(self) -> (int, list[str]):
 		for perm in itertools.permutations(self.choosen_cities):
 			total: int = 0
 
@@ -31,3 +31,5 @@ class BruteForce:
 			if total < self.best_distance:
 				self.best_distance = total
 				self.best_route = [self.main_city, *perm, self.main_city]
+
+		return total, self.best_route

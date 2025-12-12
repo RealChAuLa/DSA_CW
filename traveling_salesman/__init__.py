@@ -20,9 +20,9 @@ def launch_game() -> None:
 	game = Game()
 	draw_ui(game)
 
-	is_algorithms_complete_running = False
+	is_algorithms_complete_running: bool = False
 
-	#run algoritms
+	# run algoritms
 	correct_path: list[str] = []
 
 	if is_algorithms_complete_running:

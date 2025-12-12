@@ -1,6 +1,7 @@
 import random
 
 from .brute_force import BruteForce
+from .held_karp import HeldKarpDP
 
 class Game:
 	def __init__(self) -> None:
@@ -30,9 +31,8 @@ class Game:
 
 	def run_algorithms(self) -> None:
 		# muti-processing to spin up the algorithms
-		# brute force algorithm
 		brute_force_tsp = BruteForce(self.main_city, self.cities.index(self.main_city), self.player_selected_cities, self.distance_matrix)
-		# held-karp dynamic programming
+		hk_tsp = HeldKarpDP(self.main_city, self.cities, self.distance_matrix, self.player_selected_cities)
 		# 2-opt + nearest neighbor
 
 		# player choose city cap
