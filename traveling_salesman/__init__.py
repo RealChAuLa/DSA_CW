@@ -13,34 +13,21 @@ Developed as part of the PDSA coursework.
 """
 
 
-import random
-from brute_force import BruteForce
+from .game import Game
+from .ui import draw_ui, show_win, show_lose
 
-# define cities
-cities = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-n = len(cities)
+def launch_game() -> None:
+	game = Game()
+	draw_ui(game)
 
-# define and fill the distance matrix
-distance_matrix: list[list[int]] = [[0] * n for _ in range(n)]
-for i in range(n):
-	for j in range(i + 1, n):
-		distance = random.randint(50, 100)
-		distance_matrix[i][j] = distance
-		distance_matrix[j][i] = distance
+	is_algorithms_complete_running = False
 
-# choose main city
-main_city: str = random.choice(cities)
+	#run algoritms
+	correct_path: list[str] = []
 
-# player choosen cities
-player_selected_cities = []
-
-# muti-processing to spin up the algorithms
-# brute force algorithm
-brute_force_tsp = BruteForce(main_city, player_selected_cities, distance_matrix)
-# held-karp dynamic programming
-# 2-opt + nearest neighbor
-
-# player choose city cap
-# min 2
-# max 7
-# else my laptop will die
+	if is_algorithms_complete_running:
+		if game.is_won:
+			show_win()
+		else:
+			correct_path_str = " -> ".join(correct_path)
+			show_lose(correct_path_str)
