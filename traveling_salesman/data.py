@@ -24,7 +24,7 @@ def init_database() -> None:
 		
 		# Table 1: Rounds (to track each game round) - must be created first for foreign keys
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS rounds (
+			CREATE TABLE IF NOT EXISTS tsp_rounds (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				player_name TEXT NOT NULL,
 				main_city TEXT NOT NULL,
@@ -34,19 +34,19 @@ def init_database() -> None:
 		
 		# Table 2: Algorithm times per round
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS algorithm_times (
+			CREATE TABLE IF NOT EXISTS tsp_algorithm_times (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				round_id INTEGER NOT NULL,
 				algorithm_name TEXT NOT NULL,
 				time_taken REAL NOT NULL,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				FOREIGN KEY (round_id) REFERENCES rounds(id)
+				FOREIGN KEY (round_id) REFERENCES tsp_rounds(id)
 			)
 		""")
 		
 		# Table 3: Player wins
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS player_wins (
+			CREATE TABLE IF NOT EXISTS tsp_player_wins (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				round_id INTEGER NOT NULL,
 				player_name TEXT NOT NULL,
@@ -54,7 +54,7 @@ def init_database() -> None:
 				user_selected_cities TEXT NOT NULL,
 				shortest_route TEXT NOT NULL,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				FOREIGN KEY (round_id) REFERENCES rounds(id)
+				FOREIGN KEY (round_id) REFERENCES tsp_rounds(id)
 			)
 		""")
 		
@@ -81,7 +81,7 @@ def create_round(player_name: str, main_city: str) -> int:
 		cursor = conn.cursor()
 		
 		cursor.execute("""
-			INSERT INTO rounds (player_name, main_city)
+			INSERT INTO tsp_rounds (player_name, main_city)
 			VALUES (?, ?)
 		""", (player_name, main_city))
 		
@@ -110,7 +110,7 @@ def save_algorithm_times(round_id: int, algorithm_times: dict[str, float]) -> No
 		
 		for algorithm_name, time_taken in algorithm_times.items():
 			cursor.execute("""
-				INSERT INTO algorithm_times (round_id, algorithm_name, time_taken)
+				INSERT INTO tsp_algorithm_times (round_id, algorithm_name, time_taken)
 				VALUES (?, ?, ?)
 			""", (round_id, algorithm_name, time_taken))
 		
@@ -144,7 +144,7 @@ def save_player_win(round_id: int, player_name: str, home_city: str,
 		route_str = " -> ".join(shortest_route)
 		
 		cursor.execute("""
-			INSERT INTO player_wins (round_id, player_name, home_city, user_selected_cities, shortest_route)
+			INSERT INTO tsp_player_wins (round_id, player_name, home_city, user_selected_cities, shortest_route)
 			VALUES (?, ?, ?, ?, ?)
 		""", (round_id, player_name, home_city, selected_cities_str, route_str))
 		
