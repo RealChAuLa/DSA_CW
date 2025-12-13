@@ -1,5 +1,7 @@
 class HeldKarpDP:
 	def __init__(self, main_city: str, all_cities: list[str], distance_matrix: list[list[int]], selected_cities: list[str]) -> None:
+		# Filter out main city from selected_cities to avoid duplicates
+		selected_cities = [city for city in selected_cities if city != main_city]
 		# create new list with main city first and selected cities
 		self.ordered_city_list = [main_city] + selected_cities
 		# city name -> index in global matrix
@@ -70,9 +72,14 @@ class HeldKarpDP:
 			prev = parent[mask][curr]
 			mask ^= (1 << curr) # ^ - xor operator
 			curr = prev
-		path.append(0)  # add start node
-		path.reverse()
-		path.append(0)  # return to start
+		# Path now contains [last, ..., 0] in reverse order (ends with 0)
+		path.reverse()  # Now it's [0, ..., last]
+		# Remove duplicate 0 at start if present (shouldn't happen but safety check)
+		if len(path) > 0 and path[0] == 0 and len(path) > 1 and path[1] == 0:
+			path = path[1:]
+		# Add return to start (path ends with last, not 0, so we need to add 0)
+		if len(path) == 0 or path[-1] != 0:
+			path.append(0)
 
 		final_path: list[str] = [self.ordered_city_list[i] for i in path]
 

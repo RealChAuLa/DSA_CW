@@ -1,5 +1,7 @@
 class NearestNeighbor2Opt:
 	def __init__(self, main_city: str, selected_cities_list: list[str], distance_matrix: list[list[int]]):
+		# Filter out main city from selected_cities_list to avoid duplicates
+		selected_cities_list = [city for city in selected_cities_list if city != main_city]
 		self.ordered_city_list = [main_city] + selected_cities_list
 		self.dist = distance_matrix
 		self.n = len(self.ordered_city_list)
