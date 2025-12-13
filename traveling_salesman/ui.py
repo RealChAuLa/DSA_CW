@@ -2,10 +2,12 @@ import customtkinter as ctk
 import math
 import random
 import time
+from typing import Optional
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from .game import Game
+from .data import init_database, create_round, save_algorithm_times, save_player_win
 
 def spring_layout(cities: list[str], distance_matrix: list[list[int]], iterations: int = 100) -> dict[str, tuple[float, float]]:
 	n = len(cities)
@@ -145,7 +147,82 @@ def draw_graph(ax, cities: list[str], distance_matrix: list[list[int]], main_cit
 	ax.axis('off')
 	ax.set_title('City Graph with Distances', fontsize=14, color=text_color, pad=10)
 
+def get_player_name() -> Optional[str]:
+	"""
+	Show a popup to get the player's name before starting the game.
+	Returns the player name or None if cancelled.
+	"""
+	# Create a temporary root window for the popup
+	temp_root = ctk.CTk()
+	temp_root.withdraw()  # Hide the root window
+	
+	popup = ctk.CTkToplevel(temp_root)
+	popup.title("Enter Player Name")
+	popup.geometry("400x200")
+	popup.configure(fg_color="#0a0e27")
+	popup.resizable(False, False)
+	popup.grab_set()  # Make it modal
+	
+	# Center the popup
+	popup.update_idletasks()
+	x = (popup.winfo_screenwidth() // 2) - (400 // 2)
+	y = (popup.winfo_screenheight() // 2) - (200 // 2)
+	popup.geometry(f"400x200+{x}+{y}")
+	
+	player_name = [None]  # Use list to allow modification in nested function
+	
+	def on_submit():
+		name = name_entry.get().strip()
+		if name:
+			player_name[0] = name
+		popup.destroy()
+	
+	def on_cancel():
+		popup.destroy()
+	
+	ctk.CTkLabel(
+		popup, 
+		text="Enter your name:", 
+		font=("SF Pro Display", 16)
+	).pack(pady=(30, 10))
+	
+	name_entry = ctk.CTkEntry(popup, width=300, font=("SF Pro Display", 14))
+	name_entry.pack(pady=10)
+	name_entry.focus()
+	
+	button_frame = ctk.CTkFrame(popup, fg_color="transparent")
+	button_frame.pack(pady=20)
+	
+	ctk.CTkButton(button_frame, text="Start", command=on_submit, width=120).pack(side="left", padx=10)
+	ctk.CTkButton(button_frame, text="Cancel", command=on_cancel, width=120).pack(side="left", padx=10)
+	
+	# Handle Enter key
+	name_entry.bind("<Return>", lambda e: on_submit())
+	
+	# Wait for the popup to be destroyed
+	popup.wait_window()
+	
+	# Safely destroy temp_root if it still exists
+	try:
+		if temp_root.winfo_exists():
+			temp_root.quit()
+			temp_root.destroy()
+	except Exception:
+		pass  # Window already destroyed or error occurred
+	
+	return player_name[0]
+
+
 def draw_ui(game: Game) -> None:
+	# Initialize database
+	init_database()
+	
+	# Get player name before starting
+	player_name = get_player_name()
+	if not player_name:
+		# User cancelled, exit
+		return
+	
 	window = ctk.CTk()
 	window.title("Traveling Salesman Problem")
 	window.geometry("1280x720")
@@ -158,6 +235,9 @@ def draw_ui(game: Game) -> None:
 	text_secondary = "#94a3b8"
 
 	window.configure(fg_color=bg_dark)
+	
+	# Track current round ID for database
+	current_round_id = [None]
 
 	# --- Main layout split (Left + Right) ---
 	main_frame = ctk.CTkFrame(window, fg_color="transparent")
@@ -296,6 +376,14 @@ def draw_ui(game: Game) -> None:
 		# Parse player guess (assuming space-separated cities)
 		player_guess = guess_text.split()
 		
+		# Create a new round in the database
+		try:
+			round_id = create_round(player_name, game.main_city)
+			current_round_id[0] = round_id
+		except Exception as e:
+			# If database save fails, continue anyway (don't block gameplay)
+			print(f"Warning: Failed to create round in database: {e}")
+		
 		# Clear previous logs
 		logs_text.delete("1.0", "end")
 		
@@ -359,11 +447,36 @@ def draw_ui(game: Game) -> None:
 		
 		add_log(f"\nTotal execution time: {total_time:.3f}s", text_secondary)
 		
+		# Save algorithm times to database
+		if current_round_id[0] and hasattr(game, 'algorithm_times') and game.algorithm_times:
+			try:
+				save_algorithm_times(current_round_id[0], game.algorithm_times)
+			except Exception as e:
+				# If database save fails, continue anyway
+				print(f"Warning: Failed to save algorithm times: {e}")
+		
+		# Save player win if they won
+		if is_won and current_round_id[0]:
+			try:
+				save_player_win(
+					current_round_id[0],
+					player_name,
+					game.main_city,
+					game.player_selected_cities,
+					best_path
+				)
+			except Exception as e:
+				# If database save fails, continue anyway
+				print(f"Warning: Failed to save player win: {e}")
+		
 		# Function to refresh the game for a new round
 		def refresh_game():
 			# Reset the game (new distance matrix and main city)
 			old_main_city = game.main_city
 			game.reset_game()
+			
+			# Reset round ID for next round
+			current_round_id[0] = None
 			
 			# Clear guess entry
 			guess_entry.delete(0, "end")
