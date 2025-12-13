@@ -23,6 +23,11 @@ class HeldKarpDP:
 
 	def start(self) -> tuple[int, list[str]]:
 		n = len(self.hk_matrix)
+		
+		# Edge case: if only main city (n=1), return main city to itself
+		if n == 1:
+			return 0, [self.ordered_city_list[0], self.ordered_city_list[0]]
+		
 		# Number of subsets: 2^n
 		N = 1 << n
 		INF = float('inf')

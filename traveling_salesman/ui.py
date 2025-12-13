@@ -302,13 +302,18 @@ def draw_ui(game: Game) -> None:
 		# Function to add log message
 		tag_counter = [0]
 		def add_log(message: str, color: str = text_primary):
-			start_pos = logs_text.index("end")
+			# Get position before inserting
+			start_index = logs_text.index("end")
 			logs_text.insert("end", message + "\n")
+			# Get position after inserting (before the newline)
+			end_index = logs_text.index("end-1c")
+			
+			# Apply color tag if not default color
 			if color != text_primary:
-				end_pos = logs_text.index("end-1c")
 				tag_counter[0] += 1
-				tag_name = f"color_{tag_counter[0]}"
-				logs_text.tag_add(tag_name, start_pos, end_pos)
+				tag_name = f"colored_{tag_counter[0]}"
+				# Apply tag to the inserted text
+				logs_text.tag_add(tag_name, start_index, end_index)
 				logs_text.tag_config(tag_name, foreground=color)
 			logs_text.see("end")
 			window.update()
@@ -325,20 +330,30 @@ def draw_ui(game: Game) -> None:
 		
 		# Run algorithms with multiprocessing and compare results
 		is_won, best_path = game.run_algorithms(player_guess)
-		print(best_path)
 		
 		# Get timing information from game object
 		total_time = time.time() - total_start
 		
 		# Log completion with individual times
-		if hasattr(game, 'algorithm_times'):
-			bf_time = game.algorithm_times.get("Brute Force", 0)
-			hk_time = game.algorithm_times.get("Held-Karp", 0)
-			nn_time = game.algorithm_times.get("Nearest Neighbor 2-Opt", 0)
+		if hasattr(game, 'algorithm_times') and game.algorithm_times:
+			bf_time = game.algorithm_times.get("Brute Force", 0.0)
+			hk_time = game.algorithm_times.get("Held-Karp", 0.0)
+			nn_time = game.algorithm_times.get("Nearest Neighbor 2-Opt", 0.0)
 			
-			add_log(f"✓ Brute Force: Finished in {bf_time:.3f}s", status_green)
-			add_log(f"✓ Held-Karp DP: Finished in {hk_time:.3f}s", status_green)
-			add_log(f"✓ Nearest Neighbor 2-Opt: Finished in {nn_time:.3f}s", status_green)
+			# Format time display - use appropriate precision for small values
+			def format_time(t: float) -> str:
+				if t >= 0.001:
+					return f"{t:.4f}s"
+				elif t >= 0.0001:
+					return f"{t:.6f}s"
+				else:
+					# For very small times (microseconds), show 8 decimal places
+					return f"{t:.8f}s"
+			
+			# Display times with appropriate precision
+			add_log(f"✓ Brute Force: Finished in {format_time(bf_time)}", status_green)
+			add_log(f"✓ Held-Karp DP: Finished in {format_time(hk_time)}", status_green)
+			add_log(f"✓ Nearest Neighbor 2-Opt: Finished in {format_time(nn_time)}", status_green)
 		else:
 			add_log("✓ All algorithms finished", status_green)
 		

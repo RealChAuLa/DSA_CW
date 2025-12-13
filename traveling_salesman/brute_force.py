@@ -15,6 +15,10 @@ class BruteForce:
 		self.main_city_index = main_city_index
 
 	def start(self) -> tuple[int, list[str]]:
+		# Edge case: if no cities are selected, return main city to itself
+		if len(self.choosen_cities) == 0:
+			return 0, [self.main_city, self.main_city]
+		
 		for perm in itertools.permutations(self.choosen_cities):
 			total: int = 0
 			# go to first city (use global indices)

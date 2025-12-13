@@ -9,29 +9,29 @@ from .nn_2opt import NearestNeighbor2Opt
 def run_brute_force(args: tuple) -> tuple[int, list[str], float]:
 	import time
 	main_city, main_city_index, selected_cities, distance_matrix, all_cities = args
-	start_time = time.time()
+	start_time = time.perf_counter()  # Use perf_counter for more precise timing
 	bf = BruteForce(main_city, main_city_index, selected_cities, distance_matrix, all_cities)
 	distance, path = bf.start()
-	elapsed = time.time() - start_time
-	return distance, path, elapsed
+	elapsed = time.perf_counter() - start_time
+	return distance, path, float(elapsed)
 
 def run_held_karp(args: tuple) -> tuple[int, list[str], float]:
 	import time
 	main_city, all_cities, distance_matrix, selected_cities = args
-	start_time = time.time()
+	start_time = time.perf_counter()  # Use perf_counter for more precise timing
 	hk = HeldKarpDP(main_city, all_cities, distance_matrix, selected_cities)
 	distance, path = hk.start()
-	elapsed = time.time() - start_time
-	return distance, path, elapsed
+	elapsed = time.perf_counter() - start_time
+	return distance, path, float(elapsed)
 
 def run_nn_2opt(args: tuple) -> tuple[int, list[str], float]:
 	import time
 	main_city, selected_cities, distance_matrix = args
-	start_time = time.time()
+	start_time = time.perf_counter()  # Use perf_counter for more precise timing
 	nn = NearestNeighbor2Opt(main_city, selected_cities, distance_matrix)
 	distance, path = nn.start()
-	elapsed = time.time() - start_time
-	return distance, path, elapsed
+	elapsed = time.perf_counter() - start_time
+	return distance, path, float(elapsed)
 
 class Game:
 	def __init__(self) -> None:
@@ -94,11 +94,11 @@ class Game:
 			hk_distance, hk_path, hk_time = hk_result.get()
 			nn_distance, nn_path, nn_time = nn_result.get()
 		
-		# Store timing information
+		# Store timing information (ensure times are floats)
 		self.algorithm_times = {
-			"Brute Force": bf_time,
-			"Held-Karp": hk_time,
-			"Nearest Neighbor 2-Opt": nn_time
+			"Brute Force": float(bf_time) if bf_time is not None else 0.0,
+			"Held-Karp": float(hk_time) if hk_time is not None else 0.0,
+			"Nearest Neighbor 2-Opt": float(nn_time) if nn_time is not None else 0.0
 		}
 
 		# Compare results and find the best path
