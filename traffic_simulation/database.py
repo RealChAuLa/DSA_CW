@@ -14,13 +14,13 @@ class DatabaseError(Exception):
     pass
 
 def init_db():
-    """Initialize the database with proper exception handling"""
+    """Initialize the database without wiping existing game history."""
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
 
-        # Table for CORRECT answers only
+        # Create tables if they do not exist. Do NOT drop existing data.
         cur.execute("""
             CREATE TABLE IF NOT EXISTS win_results (
                 id INTEGER PRIMARY KEY,
@@ -28,12 +28,11 @@ def init_db():
                 player_guess INTEGER NOT NULL,
                 correct_answer INTEGER NOT NULL,
                 ek_time REAL,
-                ff_time REAL,
+                dinic_time REAL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) WITHOUT ROWID
+            )
         """)
         
-        # Table for ALL game results (pass and fail)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS all_game_results (
                 id INTEGER PRIMARY KEY,
@@ -41,16 +40,13 @@ def init_db():
                 player_guess INTEGER NOT NULL,
                 correct_answer INTEGER NOT NULL,
                 ek_time REAL,
-                ff_time REAL,
+                dinic_time REAL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) WITHOUT ROWID
+            )
         """)
         
-        # Remove sqlite_sequence table if it exists
-        cur.execute("DROP TABLE IF EXISTS sqlite_sequence")
-        
         conn.commit()
-        logger.info("Database initialized successfully")
+        logger.info("Database initialized successfully (existing data preserved)")
     except sqlite3.Error as e:
         logger.error(f"Database initialization error: {e}")
         raise DatabaseError(f"Failed to initialize database: {e}")
@@ -125,7 +121,7 @@ def validate_answer(answer):
     except (ValueError, TypeError):
         return False, "Answer must be a valid integer"
 
-def insert_correct_result(player_name, player_guess, correct_answer, ek_time, ff_time):
+def insert_correct_result(player_name, player_guess, correct_answer, ek_time, dinic_time):
     """
     Insert a correct result into the database with comprehensive validation and error handling.
     Only called when player's answer is correct.
@@ -135,7 +131,7 @@ def insert_correct_result(player_name, player_guess, correct_answer, ek_time, ff
         player_guess: The player's guessed answer (integer, equals correct_answer)
         correct_answer: The correct answer they identified (integer)
         ek_time: Edmonds-Karp algorithm execution time (float)
-        ff_time: Ford-Fulkerson algorithm execution time (float)
+        dinic_time: Dinic's algorithm execution time (float)
     
     Returns:
         (success, message): Tuple indicating success and message
@@ -155,9 +151,9 @@ def insert_correct_result(player_name, player_guess, correct_answer, ek_time, ff
     # Validate times (should be non-negative)
     try:
         ek_time = float(ek_time) if ek_time is not None else 0.0
-        ff_time = float(ff_time) if ff_time is not None else 0.0
+        dinic_time = float(dinic_time) if dinic_time is not None else 0.0
         
-        if ek_time < 0 or ff_time < 0:
+        if ek_time < 0 or dinic_time < 0:
             return False, "Execution times cannot be negative"
     except (ValueError, TypeError) as e:
         logger.warning(f"Invalid time values: {e}")
@@ -177,9 +173,9 @@ def insert_correct_result(player_name, player_guess, correct_answer, ek_time, ff
         next_id = (max_id + 1) if max_id is not None else 1
 
         cur.execute("""
-            INSERT INTO win_results (id, player_name, player_guess, correct_answer, ek_time, ff_time)
+            INSERT INTO win_results (id, player_name, player_guess, correct_answer, ek_time, dinic_time)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (next_id, player_name, int(player_guess), int(correct_answer), ek_time, ff_time))
+        """, (next_id, player_name, int(player_guess), int(correct_answer), ek_time, dinic_time))
 
         conn.commit()
         logger.info(f"Successfully saved correct answer for player: {player_name}")
@@ -204,7 +200,7 @@ def insert_correct_result(player_name, player_guess, correct_answer, ek_time, ff
             except Exception as e:
                 logger.error(f"Error closing database connection: {e}")
 
-def insert_all_result(player_name, player_guess, correct_answer, ek_time, ff_time):
+def insert_all_result(player_name, player_guess, correct_answer, ek_time, dinic_time):
     """
     Insert ALL game results (both pass and fail) into the database with comprehensive validation.
     
@@ -213,7 +209,7 @@ def insert_all_result(player_name, player_guess, correct_answer, ek_time, ff_tim
         player_guess: The player's guessed answer (integer)
         correct_answer: The correct answer (integer)
         ek_time: Edmonds-Karp algorithm execution time (float)
-        ff_time: Ford-Fulkerson algorithm execution time (float)
+        dinic_time: Dinic's algorithm execution time (float)
     
     Returns:
         (success, message): Tuple indicating success and message
@@ -239,9 +235,9 @@ def insert_all_result(player_name, player_guess, correct_answer, ek_time, ff_tim
     # Validate times (should be non-negative)
     try:
         ek_time = float(ek_time) if ek_time is not None else 0.0
-        ff_time = float(ff_time) if ff_time is not None else 0.0
+        dinic_time = float(dinic_time) if dinic_time is not None else 0.0
         
-        if ek_time < 0 or ff_time < 0:
+        if ek_time < 0 or dinic_time < 0:
             return False, "Execution times cannot be negative"
     except (ValueError, TypeError) as e:
         logger.warning(f"Invalid time values: {e}")
@@ -261,9 +257,9 @@ def insert_all_result(player_name, player_guess, correct_answer, ek_time, ff_tim
         next_id = (max_id + 1) if max_id is not None else 1
 
         cur.execute("""
-            INSERT INTO all_game_results (id, player_name, player_guess, correct_answer, ek_time, ff_time)
+            INSERT INTO all_game_results (id, player_name, player_guess, correct_answer, ek_time, dinic_time)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (next_id, player_name, int(player_guess), int(correct_answer), ek_time, ff_time))
+        """, (next_id, player_name, int(player_guess), int(correct_answer), ek_time, dinic_time))
 
         conn.commit()
         logger.info(f"Successfully saved result for player: {player_name} (guess: {player_guess}, correct: {correct_answer})")
