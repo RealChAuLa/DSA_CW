@@ -76,11 +76,11 @@ def main():
     print("="*80)
     timings = get_algorithm_timings()
     if timings:
-        print(f"{'ID':<5} {'Round ID':<10} {'BFS Time (s)':<15} {'Dijkstra Time (s)':<18} {'Timestamp':<20}")
+        print(f"{'ID':<5} {'Round ID':<10} {'BFS Time (μs)':<15} {'Dijkstra Time (μs)':<18} {'Timestamp':<20}")
         print("-"*80)
         for timing in timings:
             record_id, round_id, bfs_time, dijkstra_time, timestamp = timing
-            print(f"{record_id:<5} {round_id:<10} {bfs_time:<15.6f} {dijkstra_time:<18.6f} {timestamp:<20}")
+            print(f"{record_id:<5} {round_id:<10} {bfs_time:<15.2f} {dijkstra_time:<18.2f} {timestamp:<20}")
     else:
         print("No algorithm timing records found.")
     print("="*80)
@@ -109,13 +109,13 @@ def main():
     print("="*80)
     wins_with_round = get_player_wins_with_round_info()
     if wins_with_round:
-        print(f"{'Win ID':<8} {'Round ID':<10} {'Player Name':<20} {'Answer':<8} {'BFS Time (s)':<15} {'Dijkstra Time (s)':<18} {'Timestamp':<20}")
+        print(f"{'Win ID':<8} {'Round ID':<10} {'Player Name':<20} {'Answer':<8} {'BFS Time (μs)':<15} {'Dijkstra Time (μs)':<18} {'Timestamp':<20}")
         print("-"*100)
         for win in wins_with_round:
             win_id, round_id, player_name, correct_answer, bfs_time, dijkstra_time, timestamp = win
             round_str = str(round_id) if round_id is not None else "N/A"
-            bfs_str = f"{bfs_time:.6f}" if bfs_time is not None else "N/A"
-            dijkstra_str = f"{dijkstra_time:.6f}" if dijkstra_time is not None else "N/A"
+            bfs_str = f"{bfs_time:.2f}" if bfs_time is not None else "N/A"
+            dijkstra_str = f"{dijkstra_time:.2f}" if dijkstra_time is not None else "N/A"
             print(f"{win_id:<8} {round_str:<10} {player_name:<20} {correct_answer:<8} {bfs_str:<15} {dijkstra_str:<18} {timestamp:<20}")
     else:
         print("No player win records with round information found.")

@@ -53,9 +53,9 @@ class SnakeLadderSolver:
         
         BFS is optimal for unweighted graphs where each move costs the same.
         
-        :return: Tuple of (minimum_moves, path, elapsed_time)
+        :return: Tuple of (minimum_moves, path, elapsed_time_microseconds)
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         visited = [False] * (self.total_cells + 1)
         parent = {}  # Track path for reconstruction
@@ -69,9 +69,10 @@ class SnakeLadderSolver:
 
             # Check if reached the end
             if cell == self.total_cells:
-                elapsed_time = time.time() - start_time
+                elapsed_seconds = time.perf_counter() - start_time
+                elapsed_microseconds = elapsed_seconds * 1_000_000  # Convert to microseconds
                 path = self._reconstruct_path(parent, cell)
-                return dist, path, elapsed_time
+                return dist, path, elapsed_microseconds
 
             # Try all possible dice rolls (1-6)
             for dice in range(1, 7):
@@ -97,9 +98,9 @@ class SnakeLadderSolver:
         Dijkstra works for weighted graphs, though in this case
         all moves have equal weight (1).
         
-        :return: Tuple of (minimum_moves, path, elapsed_time)
+        :return: Tuple of (minimum_moves, path, elapsed_time_microseconds)
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         dist = {i: float("inf") for i in range(1, self.total_cells + 1)}
         dist[1] = 0
@@ -113,9 +114,10 @@ class SnakeLadderSolver:
 
             # Check if reached the end
             if cell == self.total_cells:
-                elapsed_time = time.time() - start_time
+                elapsed_seconds = time.perf_counter() - start_time
+                elapsed_microseconds = elapsed_seconds * 1_000_000  # Convert to microseconds
                 path = self._reconstruct_path(parent, cell)
-                return moves, path, elapsed_time
+                return moves, path, elapsed_microseconds
 
             # Explore all possible dice outcomes
             for dice in range(1, 7):

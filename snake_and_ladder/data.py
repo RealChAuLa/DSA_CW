@@ -43,7 +43,8 @@ def init_database():
                 round_id INTEGER NOT NULL,
                 bfs_time REAL NOT NULL,
                 dijkstra_time REAL NOT NULL,
-                timestamp TEXT NOT NULL
+                timestamp TEXT NOT NULL,
+                UNIQUE(round_id)
             )
         """
         )
@@ -72,6 +73,15 @@ def init_database():
             # Column already exists or table doesn't exist yet
             pass
 
+        # Ensure round_id in algorithm_timings is unique (required for FK)
+        try:
+            cursor.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_algorithm_timings_round_id "
+                "ON algorithm_timings(round_id)"
+            )
+        except sqlite3.OperationalError:
+            pass
+
         conn.commit()
     except sqlite3.Error as e:
         raise RuntimeError(f"Database initialization failed: {e}")
@@ -89,8 +99,8 @@ def save_algorithm_timings(
     Save algorithm timings for a round.
     
     :param round_id: Unique identifier for the game round
-    :param bfs_time: Time taken by BFS algorithm (in seconds)
-    :param dijkstra_time: Time taken by Dijkstra algorithm (in seconds)
+    :param bfs_time: Time taken by BFS algorithm (in microseconds)
+    :param dijkstra_time: Time taken by Dijkstra algorithm (in microseconds)
     :return: True if successful, False otherwise
     """
     conn = None

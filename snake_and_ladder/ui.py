@@ -406,7 +406,7 @@ class SnakeLadderUI(ctk.CTk):
         moves, _, elapsed_time = self.solver.bfs_min_dice()
         self.bfs_time = elapsed_time
         self.result_lbl.configure(
-            text=f"BFS: {moves} moves (Time: {elapsed_time:.6f}s)"
+            text=f"BFS: {moves} moves (Time: {elapsed_time:.2f} μs)"
         )
 
     def run_dijkstra(self):
@@ -418,7 +418,7 @@ class SnakeLadderUI(ctk.CTk):
         moves, _, elapsed_time = self.solver.dijkstra_min_dice()
         self.dijkstra_time = elapsed_time
         self.result_lbl.configure(
-            text=f"Dijkstra: {moves} moves (Time: {elapsed_time:.6f}s)"
+            text=f"Dijkstra: {moves} moves (Time: {elapsed_time:.2f} μs)"
         )
 
     # ------------------------------------------------------------------------
