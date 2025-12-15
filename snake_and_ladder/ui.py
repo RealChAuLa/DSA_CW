@@ -5,7 +5,7 @@ Handles all user interface components and game flow
 import random
 import tkinter as tk
 
-import customtkinter as ctk
+import customtkinter as ctk  # type: ignore[reportMissingImports]
 
 from snake_and_ladder import SnakeLadderSolver
 from snake_and_ladder.data import (
@@ -151,9 +151,6 @@ class SnakeLadderUI(ctk.CTk):
         )
         self.canvas.pack(expand=True)
 
-        # Algorithm buttons
-        self._build_algorithm_buttons(parent)
-
         # Result label
         self.result_lbl = ctk.CTkLabel(
             parent,
@@ -193,27 +190,6 @@ class SnakeLadderUI(ctk.CTk):
             height=40,
         ).pack(side="left", padx=10)
 
-    def _build_algorithm_buttons(self, parent):
-        """Build the algorithm execution buttons."""
-        algo_frame = ctk.CTkFrame(parent, fg_color=COLORS["bg_panel"])
-        algo_frame.pack(pady=10)
-
-        ctk.CTkButton(
-            algo_frame,
-            text="Run BFS",
-            command=self.run_bfs,
-            width=160,
-            fg_color=COLORS["bfs"],
-        ).pack(side="left", padx=10)
-
-        ctk.CTkButton(
-            algo_frame,
-            text="Run Dijkstra",
-            command=self.run_dijkstra,
-            width=160,
-            fg_color=COLORS["dijkstra"],
-        ).pack(side="left", padx=10)
-
     def _build_right_panel(self):
         """Build the right panel for game status."""
         ctk.CTkLabel(
@@ -228,16 +204,127 @@ class SnakeLadderUI(ctk.CTk):
     # ------------------------------------------------------------------------
     def _get_player_name(self):
         """Show popup to get player name after the game UI is displayed."""
-        dialog = ctk.CTkInputDialog(
-            text="Enter your name to start the game:",
-            title="Welcome to Snake & Ladder!",
-        )
-        player_name = dialog.get_input()
+        popup = ctk.CTkToplevel(self)
+        popup.title("Welcome to Snake & Ladder!")
+        popup.geometry("500x280")
+        popup.configure(fg_color=COLORS["bg_dark"])
 
-        if player_name and player_name.strip():
-            self.player_name = player_name.strip()
-        else:
-            self.player_name = "Player"
+        # Make it modal
+        popup.transient(self)
+        popup.grab_set()
+
+        # Center the popup
+        popup.update_idletasks()
+        x = (popup.winfo_screenwidth() // 2) - 250
+        y = (popup.winfo_screenheight() // 2) - 140
+        popup.geometry(f"500x280+{x}+{y}")
+
+        # Welcome message
+        ctk.CTkLabel(
+            popup,
+            text="Welcome to Snake & Ladder!",
+            font=FONTS["heading"],
+            text_color=COLORS["text_white"],
+        ).pack(pady=(20, 10))
+
+        ctk.CTkLabel(
+            popup,
+            text="Enter your name to start the game:",
+            font=FONTS["body"],
+            text_color=COLORS["text_white"],
+        ).pack(pady=5)
+
+        # Name entry field
+        name_entry = ctk.CTkEntry(
+            popup,
+            width=300,
+            height=40,
+            font=FONTS["body"],
+        )
+        name_entry.pack(pady=10)
+        name_entry.focus()
+
+        # Error label (initially hidden)
+        error_label = ctk.CTkLabel(
+            popup,
+            text="",
+            font=("SF Pro Text", 12),
+            text_color=COLORS["error"],
+        )
+        error_label.pack()
+
+        # Message label for cancel (initially hidden)
+        cancel_message_label = ctk.CTkLabel(
+            popup,
+            text="",
+            font=("SF Pro Text", 12),
+            text_color=COLORS["primary"],
+        )
+        cancel_message_label.pack()
+
+        def check_name_entry(*args):
+            """Enable/disable submit button based on name entry."""
+            player_name = name_entry.get().strip()
+            if player_name:
+                submit_btn.configure(state="normal")
+                error_label.configure(text="")
+            else:
+                submit_btn.configure(state="disabled")
+
+        def submit_name():
+            """Handle name submission."""
+            player_name = name_entry.get().strip()
+            if not player_name:
+                error_label.configure(text="Please enter your name!")
+                return
+
+            self.player_name = player_name
+            popup.destroy()
+
+        def cancel_name():
+            """Handle cancel - set default name."""
+            self.player_name = "Test Player"
+            cancel_message_label.configure(text="You play the game as Test Player!")
+            # Close popup after a short delay
+            popup.after(1500, popup.destroy)
+
+        # Button frame
+        button_frame = ctk.CTkFrame(popup, fg_color="transparent")
+        button_frame.pack(pady=10)
+
+        # Submit button (initially disabled)
+        submit_btn = ctk.CTkButton(
+            button_frame,
+            text="OK",
+            command=submit_name,
+            width=200,
+            height=45,
+            fg_color=COLORS["primary"],
+            hover_color=COLORS["primary_hover"],
+            state="disabled",  # Disabled until name is entered
+        )
+        submit_btn.pack(side="left", padx=10)
+
+        # Cancel button
+        cancel_btn = ctk.CTkButton(
+            button_frame,
+            text="Cancel",
+            command=cancel_name,
+            width=200,
+            height=45,
+            fg_color=COLORS["error"],
+            hover_color="#b91c1c",
+        )
+        cancel_btn.pack(side="left", padx=10)
+
+        # Bind entry changes to enable/disable submit button
+        name_entry.bind("<KeyRelease>", check_name_entry)
+        name_entry.bind(
+            "<Return>", lambda e: submit_name() if name_entry.get().strip() else None
+        )
+
+        # Wait for popup to close
+        popup.wait_window()
 
     def _show_congratulations_popup(self, player_name: str):
         """Show a congratulations popup dialog when player wins."""
@@ -395,33 +482,6 @@ class SnakeLadderUI(ctk.CTk):
         self.canvas.create_line(x1, y1, x2, y2, width=5, fill=color, smooth=True)
 
     # ------------------------------------------------------------------------
-    # ALGORITHM EXECUTION
-    # ------------------------------------------------------------------------
-    def run_bfs(self):
-        """Run BFS algorithm and display results."""
-        if not self.solver:
-            self.result_lbl.configure(text="Generate board first!")
-            return
-
-        moves, _, elapsed_time = self.solver.bfs_min_dice()
-        self.bfs_time = elapsed_time
-        self.result_lbl.configure(
-            text=f"BFS: {moves} moves (Time: {elapsed_time:.2f} μs)"
-        )
-
-    def run_dijkstra(self):
-        """Run Dijkstra algorithm and display results."""
-        if not self.solver:
-            self.result_lbl.configure(text="Generate board first!")
-            return
-
-        moves, _, elapsed_time = self.solver.dijkstra_min_dice()
-        self.dijkstra_time = elapsed_time
-        self.result_lbl.configure(
-            text=f"Dijkstra: {moves} moves (Time: {elapsed_time:.2f} μs)"
-        )
-
-    # ------------------------------------------------------------------------
     # GAME FLOW
     # ------------------------------------------------------------------------
     def show_guess_panel(self):
@@ -429,9 +489,57 @@ class SnakeLadderUI(ctk.CTk):
         for widget in self.right_panel.winfo_children():
             widget.destroy()
 
+        # Check if solver exists
+        if not self.solver:
+            ctk.CTkLabel(
+                self.right_panel,
+                text="Please generate a board first!",
+                font=FONTS["body"],
+                text_color=COLORS["error"],
+            ).pack(pady=20)
+            return
+
         # Run both algorithms to get timing information
-        correct, _, bfs_elapsed = self.solver.bfs_min_dice()
-        _, _, dijkstra_elapsed = self.solver.dijkstra_min_dice()
+        bfs_moves, _, bfs_elapsed = self.solver.bfs_min_dice()
+        dijkstra_moves, _, dijkstra_elapsed = self.solver.dijkstra_min_dice()
+
+        # Verify both algorithms return the same answer
+        if bfs_moves != dijkstra_moves:
+            # This should not happen, but handle it gracefully
+            error_msg = (
+                f"Algorithm mismatch! BFS: {bfs_moves}, Dijkstra: {dijkstra_moves}\n"
+                f"Using BFS result: {bfs_moves}"
+            )
+            ctk.CTkLabel(
+                self.right_panel,
+                text=error_msg,
+                font=FONTS["body"],
+                text_color=COLORS["error"],
+            ).pack(pady=20)
+            correct = bfs_moves  # Use BFS as fallback
+        else:
+            # Both algorithms agree - use the faster one
+            correct = bfs_moves
+            
+            # Determine which algorithm was faster
+            if bfs_elapsed <= dijkstra_elapsed:
+                faster_algorithm = "BFS"
+                faster_time = bfs_elapsed
+            else:
+                faster_algorithm = "Dijkstra"
+                faster_time = dijkstra_elapsed
+            
+            # # Display which algorithm was faster (optional info)
+            # info_text = (
+            #     f"Both algorithms agree: {correct} moves\n"
+            #     f"Faster: {faster_algorithm} ({faster_time:.2f} μs)"
+            # )
+            # ctk.CTkLabel(
+            #     self.right_panel,
+            #     text=info_text,
+            #     font=("SF Pro Text", 12),
+            #     text_color=COLORS["text_gray"],
+            # ).pack(pady=5)
 
         # Store timing and correct answer
         self.bfs_time = bfs_elapsed

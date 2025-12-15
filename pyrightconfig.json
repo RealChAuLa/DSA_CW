@@ -1,0 +1,17 @@
+{
+  "include": [
+    "snake_and_ladder",
+    "common",
+    "main.py"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "venv"
+  ],
+  "venvPath": ".",
+  "venv": "venv",
+  "reportMissingImports": "warning",
+  "pythonVersion": "3.12"
+}
+
