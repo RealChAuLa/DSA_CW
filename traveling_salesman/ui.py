@@ -148,10 +148,6 @@ def draw_graph(ax, cities: list[str], distance_matrix: list[list[int]], main_cit
 	ax.set_title('City Graph with Distances', fontsize=14, color=text_color, pad=10)
 
 def get_player_name() -> Optional[str]:
-	"""
-	Show a popup to get the player's name before starting the game.
-	Returns the player name or None if cancelled.
-	"""
 	# Create a temporary root window for the popup
 	temp_root = ctk.CTk()
 	temp_root.withdraw()  # Hide the root window
@@ -226,6 +222,9 @@ def draw_ui(game: Game) -> None:
 	window = ctk.CTk()
 	window.title("Traveling Salesman Problem")
 	window.geometry("1280x720")
+	
+	window.state('zoomed')
+	window.attributes('-fullscreen', True)
 
 	bg_dark = "#0a0e27"
 	card_bg = "#151932"
@@ -341,6 +340,15 @@ def draw_ui(game: Game) -> None:
 		popup.title("Validation Error")
 		popup.geometry("300x150")
 		popup.configure(fg_color=bg_dark)
+		popup.resizable(False, False)
+		popup.transient(window)
+		popup.grab_set()
+		
+		# Center the popup on screen
+		popup.update_idletasks()
+		x = (popup.winfo_screenwidth() // 2) - (300 // 2)
+		y = (popup.winfo_screenheight() // 2) - (150 // 2)
+		popup.geometry(f"300x150+{x}+{y}")
 
 		ctk.CTkLabel(
 			popup, 
@@ -517,20 +525,42 @@ def draw_ui(game: Game) -> None:
 		
 		# Show result popup with refresh callback
 		if is_won:
-			show_win(refresh_game)
+			show_win(window, refresh_game)
 		else:
-			show_lose(" -> ".join(best_path), refresh_game)
+			show_lose(window, " -> ".join(best_path), refresh_game)
 
-	check_button = ctk.CTkButton(right_frame, text="Check", command=on_check_button_click)
-	check_button.pack(pady=20)
+	# Button frame to hold Check and Exit buttons side by side
+	button_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
+	button_frame.pack(pady=20)
+	
+	check_button = ctk.CTkButton(button_frame, text="Check", command=on_check_button_click)
+	check_button.pack(side="left", padx=5)
+	
+	exit_button = ctk.CTkButton(
+		button_frame, 
+		text="Exit", 
+		command=window.destroy,
+		fg_color="#ef4444",  # Red color
+		hover_color="#dc2626"  # Darker red on hover
+	)
+	exit_button.pack(side="left", padx=5)
 
 	window.mainloop()
 
-def show_win(refresh_callback) -> None:
-	popup = ctk.CTkToplevel()
+def show_win(parent_window, refresh_callback) -> None:
+	popup = ctk.CTkToplevel(parent_window)
 	popup.title("Result")
 	popup.geometry("250x150")
 	popup.configure(fg_color="#0a0e27")
+	popup.resizable(False, False)
+	popup.transient(parent_window)
+	popup.grab_set()
+	
+	# Center the popup on screen
+	popup.update_idletasks()
+	x = (popup.winfo_screenwidth() // 2) - (250 // 2)
+	y = (popup.winfo_screenheight() // 2) - (150 // 2)
+	popup.geometry(f"250x150+{x}+{y}")
 
 	def on_ok():
 		refresh_callback()
@@ -539,11 +569,20 @@ def show_win(refresh_callback) -> None:
 	ctk.CTkLabel(popup, text="You won!", font=("SF Pro Display", 18)).pack(pady=20)
 	ctk.CTkButton(popup, text="OK", command=on_ok).pack(pady=10)
 
-def show_lose(correct_path: str, refresh_callback) -> None:
-	popup = ctk.CTkToplevel()
+def show_lose(parent_window, correct_path: str, refresh_callback) -> None:
+	popup = ctk.CTkToplevel(parent_window)
 	popup.title("Result")
 	popup.geometry("300x180")
 	popup.configure(fg_color="#0a0e27")
+	popup.resizable(False, False)
+	popup.transient(parent_window)
+	popup.grab_set()
+	
+	# Center the popup on screen
+	popup.update_idletasks()
+	x = (popup.winfo_screenwidth() // 2) - (300 // 2)
+	y = (popup.winfo_screenheight() // 2) - (180 // 2)
+	popup.geometry(f"300x180+{x}+{y}")
 
 	def on_ok():
 		refresh_callback()
