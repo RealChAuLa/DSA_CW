@@ -11,3 +11,6 @@ This package contains:
 Developed as part of the Programming Data Structures
 and Algorithms coursework.
 """
+from .solver import SnakeLadderSolver
+
+
