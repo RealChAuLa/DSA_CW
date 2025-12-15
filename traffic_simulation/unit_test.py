@@ -28,7 +28,7 @@ from graph import (
     new_random_graph
 )
 from max_flow_algorithms import (
-    SimpleQueue, edmonds_karp, ford_fulkerson
+    SimpleQueue, edmonds_karp, dinic
 )
 from utils import validate_int, time_function
 
@@ -524,46 +524,46 @@ class TestMaxFlowAlgorithms:
         max_flow = edmonds_karp(capacity, 0, 3)
         assert max_flow == 20
     
-    # Ford-Fulkerson Tests
-    def test_ford_fulkerson_simple_network(self, simple_network):
-        """Test Ford-Fulkerson on simple network"""
-        max_flow = ford_fulkerson(simple_network, 0, 2)
+    # Dinic Tests
+    def test_dinic_simple_network(self, simple_network):
+        """Test Dinic on simple network"""
+        max_flow = dinic(simple_network, 0, 2)
         assert max_flow == 10
     
-    def test_ford_fulkerson_sample_graph(self, sample_graph):
-        """Test Ford-Fulkerson on sample graph"""
+    def test_dinic_sample_graph(self, sample_graph):
+        """Test Dinic on sample graph"""
         _, _, _, capacity_matrix = sample_graph
-        max_flow = ford_fulkerson(capacity_matrix, 0, 3)
+        max_flow = dinic(capacity_matrix, 0, 3)
         assert max_flow == 13
     
-    def test_ford_fulkerson_no_path(self):
-        """Test Ford-Fulkerson when no path exists"""
+    def test_dinic_no_path(self):
+        """Test Dinic when no path exists"""
         capacity = [
             [0, 10, 0],
             [0, 0, 0],
             [0, 0, 0]
         ]
-        max_flow = ford_fulkerson(capacity, 0, 2)
+        max_flow = dinic(capacity, 0, 2)
         assert max_flow == 0
     
-    def test_ford_fulkerson_direct_edge(self):
-        """Test Ford-Fulkerson with direct edge"""
+    def test_dinic_direct_edge(self):
+        """Test Dinic with direct edge"""
         capacity = [
             [0, 20],
             [0, 0]
         ]
-        max_flow = ford_fulkerson(capacity, 0, 1)
+        max_flow = dinic(capacity, 0, 1)
         assert max_flow == 20
     
-    def test_ford_fulkerson_multiple_paths(self):
-        """Test Ford-Fulkerson with multiple paths"""
+    def test_dinic_multiple_paths(self):
+        """Test Dinic with multiple paths"""
         capacity = [
             [0, 10, 10, 0],
             [0, 0, 0, 10],
             [0, 0, 0, 10],
             [0, 0, 0, 0]
         ]
-        max_flow = ford_fulkerson(capacity, 0, 3)
+        max_flow = dinic(capacity, 0, 3)
         assert max_flow == 20
     
     # Algorithm Consistency Tests
@@ -571,11 +571,11 @@ class TestMaxFlowAlgorithms:
         """Test both algorithms give same result on simple network"""
         ek_flow = edmonds_karp(simple_network, 0, 2)
         
-        # Need fresh copy for FF
+        # Need fresh copy for Dinic
         capacity_copy = [row[:] for row in simple_network]
-        ff_flow = ford_fulkerson(capacity_copy, 0, 2)
+        dinic_flow = dinic(capacity_copy, 0, 2)
         
-        assert ek_flow == ff_flow
+        assert ek_flow == dinic_flow
     
     def test_algorithms_give_same_result_complex(self, sample_graph):
         """Test both algorithms give same result on complex graph"""
@@ -583,11 +583,11 @@ class TestMaxFlowAlgorithms:
         
         ek_flow = edmonds_karp(capacity_matrix, 0, 3)
         
-        # Fresh copy for FF
+        # Fresh copy for Dinic
         capacity_copy = [row[:] for row in capacity_matrix]
-        ff_flow = ford_fulkerson(capacity_copy, 0, 3)
+        dinic_flow = dinic(capacity_copy, 0, 3)
         
-        assert ek_flow == ff_flow
+        assert ek_flow == dinic_flow
 
 
 # ============================================================================
@@ -700,12 +700,12 @@ class TestIntegration:
         
         ek_flow = edmonds_karp(capacity_mat, source_idx, sink_idx)
         
-        # Fresh copy for FF
+        # Fresh copy for Dinic
         capacity_copy = [row[:] for row in capacity_mat]
-        ff_flow = ford_fulkerson(capacity_copy, source_idx, sink_idx)
+        dinic_flow = dinic(capacity_copy, source_idx, sink_idx)
         
         # Both should give same result
-        assert ek_flow == ff_flow
+        assert ek_flow == dinic_flow
         
         # Flow should be non-negative
         assert ek_flow >= 0
@@ -742,14 +742,14 @@ class TestIntegration:
         # Time EK
         ek_flow, ek_time = time_function(edmonds_karp, capacity_mat, source_idx, sink_idx)
         
-        # Time FF
+        # Time Dinic
         capacity_copy = [row[:] for row in capacity_mat]
-        ff_flow, ff_time = time_function(ford_fulkerson, capacity_copy, source_idx, sink_idx)
+        dinic_flow, dinic_time = time_function(dinic, capacity_copy, source_idx, sink_idx)
         
         # Both should succeed
-        assert ek_flow == ff_flow
+        assert ek_flow == dinic_flow
         assert ek_time >= 0
-        assert ff_time >= 0
+        assert dinic_time >= 0
     
     def test_database_workflow(self):
         """Test complete database workflow"""

@@ -1,6 +1,6 @@
 # max_flow_algorithms.py
-# Pure Python implementations: Ford-Fulkerson (DFS) and Edmonds-Karp (BFS)
-# No imports used — manual queue via list, recursion allowed.
+# Pure Python implementations: Edmonds-Karp (BFS) and Dinic's Algorithm (level graph + blocking flow)
+# No external imports required beyond built-ins.
 
 # -------------------------
 # Helper: Simple Queue (list-based)
@@ -73,41 +73,60 @@ def edmonds_karp(capacity, source, sink):
     return max_flow
 
 # -------------------------
-# Ford-Fulkerson (DFS-based)
+# Dinic's Algorithm
 # Uses adjacency matrix 'capacity' and integer node indices
 # -------------------------
-def ford_fulkerson(capacity, source, sink):
+def dinic(capacity, source, sink):
     n = len(capacity)
     residual = [capacity[i][:] for i in range(n)]
 
-    def dfs(u, t, visited, flow):
-        if u == t:
-            return flow
-        visited[u] = True
-        for v in range(n):
-            if not visited[v] and residual[u][v] > 0:
-                # Calculate minimum capacity along the path
-                if flow is None:
-                    min_cap = residual[u][v]
-                else:
-                    min_cap = min(flow, residual[u][v])
-                pushed = dfs(v, t, visited, min_cap)
-                if pushed and pushed > 0:
-                    residual[u][v] -= pushed
-                    residual[v][u] += pushed
-                    return pushed
+    def bfs_level():
+        """Build level graph; return list of levels (sink level -1 if unreachable)."""
+        level = [-1] * n
+        q = SimpleQueue()
+        q.enqueue(source)
+        level[source] = 0
+        while not q.is_empty():
+            u = q.dequeue()
+            for v in range(n):
+                if residual[u][v] > 0 and level[v] == -1:
+                    level[v] = level[u] + 1
+                    q.enqueue(v)
+        return level
+
+    def dfs_block(u, pushed, level, it):
+        """Send flow through level graph using current-edge iteration to reduce complexity."""
+        if u == sink:
+            return pushed
+        for v in range(it[u], n):
+            if residual[u][v] > 0 and level[v] == level[u] + 1:
+                it[u] = v  # mark current edge index
+                bottleneck = pushed if pushed is not None else residual[u][v]
+                flow = dfs_block(v, min(bottleneck, residual[u][v]) if bottleneck is not None else residual[u][v], level, it)
+                if flow and flow > 0:
+                    residual[u][v] -= flow
+                    residual[v][u] += flow
+                    return flow
+            it[u] = v + 1  # move iterator forward even if edge not used
+        it[u] = n  # exhausted all neighbors
         return 0
 
     max_flow = 0
+    INF = 10**18
+
     while True:
-        visited = [False] * n
-        pushed = dfs(source, sink, visited, None)  # None means infinite
-        if not pushed or pushed == 0:
-            break
-        max_flow += pushed
+        level = bfs_level()
+        if level[sink] == -1:
+            break  # no more augmenting paths
+        it = [0] * n
+        while True:
+            pushed = dfs_block(source, INF, level, it)
+            if not pushed:
+                break
+            max_flow += pushed
 
     return max_flow
 
 # Exposed API: functions expecting adjacency-matrix and integer indices:
 # edmonds_karp(capacity_matrix, source_index, sink_index)
-# ford_fulkerson(capacity_matrix, source_index, sink_index)
+# dinic(capacity_matrix, source_index, sink_index)

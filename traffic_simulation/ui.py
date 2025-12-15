@@ -2,7 +2,7 @@
 import customtkinter as ctk
 import tkinter as tk
 from .graph import new_random_graph, NODES, EDGES
-from .max_flow_algorithms import edmonds_karp, ford_fulkerson
+from .max_flow_algorithms import edmonds_karp, dinic
 from .database import insert_correct_result, insert_all_result, validate_player_name, init_db, DatabaseError
 from .utils import validate_int, time_function
 import logging
@@ -415,18 +415,16 @@ class TrafficGameUI:
             sink_idx = self.nodes.index("T")
 
             self.correct_answer, ek_time = time_function(edmonds_karp, self.capacity_mat, source_idx, sink_idx)
-            # Ford-Fulkerson may modify internal residual; compute on fresh copy
-            import copy
+            # Dinic also mutates the matrix; operate on a copy for fairness
             mat_copy = [row[:] for row in self.capacity_mat]
-            # Use pure ford_fulkerson
-            ff_result, ff_time = time_function(ford_fulkerson, mat_copy, source_idx, sink_idx)
+            dinic_result, dinic_time = time_function(dinic, mat_copy, source_idx, sink_idx)
 
-            if ff_result != self.correct_answer:
+            if dinic_result != self.correct_answer:
                 logger.warning("Warning: Algorithms mismatch!")
                 print("Warning: Algorithms mismatch!")
             # store
             self.ek_time = ek_time
-            self.ff_time = ff_time
+            self.dinic_time = dinic_time
             # For safety we pick the smaller or confirm they match; prefer ek result
             # (in correct implementations they must match)
             self.correct_answer = int(self.correct_answer)  # ensure int
@@ -557,7 +555,7 @@ class TrafficGameUI:
                         guess,
                         self.correct_answer, 
                         self.ek_time, 
-                        self.ff_time
+                        self.dinic_time
                     )
                     
                     # Save ALL results (pass and fail) to all_game_results table
@@ -566,7 +564,7 @@ class TrafficGameUI:
                         guess,
                         self.correct_answer,
                         self.ek_time,
-                        self.ff_time
+                        self.dinic_time
                     )
                     
                     if success:
@@ -601,7 +599,7 @@ class TrafficGameUI:
                     guess,
                     self.correct_answer,
                     self.ek_time,
-                    self.ff_time
+                    self.dinic_time
                 )
                 
                 self.result_label.configure(
@@ -617,7 +615,7 @@ class TrafficGameUI:
                     guess,
                     self.correct_answer,
                     self.ek_time,
-                    self.ff_time
+                    self.dinic_time
                 )
                 
                 self.result_label.configure(
