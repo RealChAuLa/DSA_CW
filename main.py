@@ -229,7 +229,7 @@ class GameMenuApp(ctk.CTk):
         launch_game()
 
     def open_tsp(self):
-        from traveling_salesman.ui import launch_game
+        from traveling_salesman import launch_game
         launch_game()
 
     def open_hanoi(self):
