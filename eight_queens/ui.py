@@ -686,12 +686,12 @@ class EightQueensUI:
 
             # ✅ Only reset when ALL 92 solutions have been recognized
             try:
-                if db_manager and hasattr(db_manager, "get_recognized_solutions"):
-                    recognized = db_manager.get_recognized_solutions()
-                    if len(recognized) >= 92:
+                if db_manager and hasattr(db_manager, "get_recognized_count"):
+                    count = db_manager.get_recognized_count()
+                    if count >= 92:
                         db_manager.reset_all_recognized_flags()
-                        show_info("All 92 solutions found!  Flags reset for new players.")
-                        self._log("All solutions recognized. Flags reset.")
+                        show_info("All 92 solutions found! Flags reset for new players.")
+                        self._log("All solutions recognized.  Flags reset.")
             except Exception:
                 pass
 
@@ -710,8 +710,14 @@ class EightQueensUI:
                 start = time.perf_counter()
                 sols = solver.find_all_solutions_sequential()
                 t = time.perf_counter() - start
-            else:
-                raise RuntimeError("Solver not available.")
+
+            #to Store Solution using threading
+            #if solver and hasattr(solver, "run_threaded_timed"):
+            #    sols, t = solver.run_threaded_timed()  # ← THREADED
+            #elif solver and hasattr(solver, "run_sequential_timed"):
+            #    sols, t = solver.run_sequential_timed()  # ← Fallback
+            #else:
+            #    raise RuntimeError("Solver not available.")
 
             # insert to DB if available
             inserted = 0
